@@ -54,6 +54,25 @@ def _append_ring(buf: np.ndarray, chunk: np.ndarray) -> np.ndarray:
         cat = cat[-RING_SAMPLES:]  # 뒤에서 RING_SECONDS만 유지
     return cat
 
+def merge_guard(prev_committed: str, prev_pending: str, cur_text: str, guard_words=1):
+    merged_prev = (prev_committed + (" " + prev_pending if prev_pending else "")).strip()
+    pw = merged_prev.split()
+    cw = cur_text.strip().split()
+
+    # LCP(최장 공통 접두사) 길이
+    i = 0
+    while i < len(pw) and i < len(cw) and pw[i] == cw[i]:
+        i += 1
+
+    added = cw[i:]                   # 새로 추가된 단어들
+    if len(added) <= guard_words:    # 아직 확정 X
+        return prev_committed, " ".join(added)
+
+    stable = " ".join(added[:-guard_words])   # 확정 구간
+    pending = " ".join(added[-guard_words:])  # 보류(마지막 1단어)
+    committed = ( " ".join(pw + stable.split()) ).strip()
+    return committed, pending
+
 def transcribe_chunk(file_path: str | None, running_text: str):
     """Gradio 오디오 스트림 콜백 (주기적으로 호출)"""
     global wav_buf
@@ -83,7 +102,8 @@ def transcribe_chunk(file_path: str | None, running_text: str):
 
     # 필요하다면 누적 로직 사용:
     # running_text = (running_text + " " if running_text else "") + hyp
-
+    
+    
     return hyp, hyp
 
 def clear_state():
