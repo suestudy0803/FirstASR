@@ -134,3 +134,5 @@ with gr.Blocks(title="Real-time ASR (ESPnet + Gradio)") as demo:
 if __name__ == "__main__":
     # 전역 버퍼 충돌을 피하려면 concurrency_count=1 권장
     demo.queue().launch()  # 공유 필요 시 launch(share=True)
+
+print('hello world')
