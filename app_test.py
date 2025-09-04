@@ -6,7 +6,7 @@ import librosa
 from espnet_model_zoo.downloader import ModelDownloader
 from espnet2.bin.asr_inference import Speech2Text
 #from sue_asr_inference_speech2text import Speech2Text
-from utils import merge_with_cosine
+from utils import merge_with_embeddings_hybrid, emb_model
 
 # ====== 설정 ======
 TARGET_SR = 16000
@@ -92,12 +92,14 @@ def transcribe_chunk(file_path: str | None, running_text: str):
     nbests = speech2text(wav_buf)
     hyp = nbests[0][0] if nbests and nbests[0] else ""
 
-    # ✅ 이전 누적(running_text)과 새 가설(hyp)을 코사인 유사도 기반으로 병합
-    merged = merge_with_cosine(running_text, hyp,
-                               max_overlap_words=8,
-                               min_overlap_words=1,
-                               ngram=3,
-                               threshold=0.55)
+    merged = merge_with_embeddings_hybrid(
+        running_text, hyp, emb_model,
+        min_overlap_words=1,
+        max_overlap_words=8,
+        search_prefix_words=10,
+        sim_threshold=0.58
+    )
+
 
     return merged, merged
 
